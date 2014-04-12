@@ -32,6 +32,7 @@
 from __future__ import print_function, division, absolute_import
 
 import glob
+import itertools
 import numpy as np
 import mdtraj as md
 import msmbuilder as msmb
@@ -41,7 +42,7 @@ import msmbuilder as msmb
 #-----------------------------------------------------------------------------
 
 class Directory(object):
-    def __init__(self, pdb_filename, trj_path, extension="h5", stride=1):
+    def __init__(self, pdb_filename, trj_path, extension="h5", stride=1, chunk=1000):
         """A container for a directory of Trajectory objects.
 
         Parameters
@@ -52,75 +53,36 @@ class Directory(object):
             Path to a directory containing trajectory objects
         stride : int, default=1, optional
             Only read every stride-th frame.        
+        chunk : int, default=1000, optional
+            Break trajectories into chunks of this size.
         """
         self.trj0 = md.load(pdb_filename)
         self.trj_path = trj_path
         self.filenames = sorted(glob.glob(trj_path + "/*.%s" % extension), key=msmb.utils.keynat)
-        self.trajectories = None
+        self._raw_trajectories = None
         self.stride = stride
-        self.index = 0
+        self.chunk = chunk        
         
-    def cache(self):
-        """Load all trajectories into memory."""
-        self.trajectories = [md.load(filename, stride=self.stride) for filename in self.filenames]
-
-    def featurize_all(self, featurizer):
-        """Featurize all trajectory files.
+    def _cache(self):
+        """Load first chunks of trajectories into memory."""  # Probably better ways of handling this logic, but the current layout is pretty readable IMHO.
         
-        Parameters
-        ----------
-        featurizer : Featurizer
-            The featurizer to be invoked on each trajectory trajectory as
-            it is loaded
-        Returns
-        -------
-        data : np.ndarray, shape=(total_length_of_all_trajectories, n_features)
-        indices : np.ndarray, shape=(total_length_of_all_trajectories)
-        fns : np.ndarray shape=(total_length_of_all_trajectories)
-            These three arrays all share the same indexing, such that data[i] is
-            the featurized version of indices[i]-th frame in the MD trajectory
-            with filename fns[i].
-        """
-        data = []
-        indices = []
-        fns = []
+        if self.chunk == 0 and self._raw_trajectories is None:  # Load the actual trajectories, once.
+            self._raw_trajectories = [md.load(filename, stride=self.stride) for filename in self.filenames]
         
-        stride = 1  # Hardcoded right now.
-
-        for k, trj in enumerate(self):
-
-            count = 0
-
-            x = featurizer.featurize(trj)
-            n_frames = len(x)
-
-            data.append(x)
-            indices.append(count + (stride*np.arange(n_frames)))
-            fns.extend([self.filenames[k]] * n_frames)
-            count += (stride*n_frames)
-        
-        if len(data) == 0:
-            raise ValueError("None!")
-
-        return np.concatenate(data), np.concatenate(indices), np.array(fns)
+        if self.chunk == 0:
+            self.trajectories = itertools.chain(([trj] for trj in self._raw_trajectories))
+        else:
+            self.trajectories = [md.iterload(filename, stride=self.stride, chunk=self.chunk) for filename in self.filenames]
 
     def __iter__(self):
+        self._cache()
         return self
     
-    def next(self):
+    def next(self):  # Need both forms of next for py2 py3 compatibility
         return self.__next__()
     
     def __next__(self):
-        try:
-            result = self[self.index]
-        except IndexError:
-            self.index = 0  # Automatically reset index to allow repeated iterations
-            raise StopIteration
-        self.index += 1
-        return result
-
-    def __getitem__(self, index):
-        if self.trajectories is None:
-            return md.load(self.filenames[index], top=self.trj0)
-        else:
-            return self.trajectories[index]
+        for trj_chunks in self.trajectories:
+            for chunk in trj_chunks:
+                return chunk
+        raise StopIteration
