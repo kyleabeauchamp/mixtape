@@ -347,6 +347,12 @@ extensions.append(
               include_dirs=[np.get_include()]))
 
 extensions.append(
+    Extension('mixtape._markovstatemodel',
+              sources=['Mixtape/_markovstatemodel.pyx', 'Mixtape/src/msm/transmat_mle_prinz.c'],
+              libraries=['m'],
+              include_dirs=['Mixtape/src/msm', np.get_include()]))
+
+extensions.append(
     Extension('mixtape.cluster._regularspatialc',
               sources=['Mixtape/cluster/_regularspatialc.pyx'],
               libraries=['m'],
@@ -438,7 +444,7 @@ setup(name='mixtape',
       classifiers=CLASSIFIERS.splitlines(),
       packages=['mixtape', 'mixtape.commands', 'mixtape.datasets',
                 'mixtape.mslds_solvers', 'mixtape.cluster',
-                'mixtape.mslds_solvers.sparse_sdp'],
+                'mixtape.mslds_solvers.sparse_sdp', 'mixtape.lumping'],
       package_dir={'mixtape':'Mixtape'},
       scripts=['scripts/hmsm', 'scripts/mixtape', 'scripts/pbsipcluster'],
       zip_safe=False,
