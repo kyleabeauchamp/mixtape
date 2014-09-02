@@ -98,7 +98,50 @@ def _lookup_pairs_subset(all_pair_indices, subset_pair_indices, n_choose=None):
 
     return subset
 
+def guess_useful_featurizers(trj0, n_choose, rmsd_trajectory=None):
+    """Get a SubsetUnionFeaturizer that includes "best-practices" features.
     
+    Parameters
+    ----------
+    trj0 : md.Trajectory
+        MDTraj trajectory object
+    n_choose : int
+        Number of features to activate.  
+    rmsd_trajectory : MD.Trajectory, optional, default=None
+        If given, also use the RMSD to the frames in this trajectory as
+        features.  
+    
+    Returns
+    -------
+    featurizer : SubsetUnionFeaturizer
+        Returns a featurizer that includes best-practices features that
+        can be enabled or disabled via subsets.
+    """
+    atom_indices, pair_indices = get_atompair_indices(trj0, keep_atoms=None, exclude_atoms=np.array([]))
+    
+    atom_featurizer1m = SubsetAtomPairs(pair_indices, trj0, exponent=-1.0)
+    atom_featurizer2m = SubsetAtomPairs(pair_indices, trj0, exponent=-2.0)
+    atom_featurizer1p = SubsetAtomPairs(pair_indices, trj0, exponent= 1.0)
+    
+    prod_featurizer = SubsetProductFeaturizer(SubsetAtomPairs(pair_indices, trj0, exponent=-1.0), SubsetAtomPairs(pair_indices, trj0, exponent=-1.0))
+    
+    cosphi = SubsetCosPhiFeaturizer(trj0)
+    sinphi = SubsetSinPhiFeaturizer(trj0)
+    cospsi = SubsetCosPsiFeaturizer(trj0)
+    sinpsi = SubsetSinPsiFeaturizer(trj0)
+
+    if rmsd_trajectory is None:
+        featurizer = SubsetFeatureUnion([("pairs1m", atom_featurizer1m), ("pairs2m", atom_featurizer2m), ("pairs1p", atom_featurizer1p), ("prod1m", prod_featurizer), ("cosphi", cosphi), ("sinphi", sinphi), ("cospsi", cospsi), ("sinpsi", sinpsi)])
+    else:
+        rmsd_featurizer = SubsetRMSDFeaturizer(rmsd_trajectory)
+        featurizer = SubsetFeatureUnion([("pairs1m", atom_featurizer1m), ("pairs2m", atom_featurizer2m), ("pairs1p", atom_featurizer1p), ("prod1m", prod_featurizer), ("cosphi", cosphi), ("sinphi", sinphi), ("cospsi", cospsi), ("sinpsi", sinpsi), ("rmsd", rmsd_featurizer)])
+    
+    subsets = [[] for i in range(featurizer.n_featurizers)]
+    subsets[0] = np.random.randint(0, atom_featurizer1m.n_max - 1, n_choose)
+    featurizer.subsets = subsets    
+
+    return featurizer
+
 
 class BaseSubsetFeaturizer(mixtape.featurizer.Featurizer):
     """Base class for featurizers that have a subset of active features.
@@ -287,9 +330,6 @@ class SubsetFeatureUnion(mixtape.featurizer.TrajFeatureUnion):
     @property
     def n_features(self):
         return sum([featurizer.n_features for (_, featurizer) in self.transformer_list])
-
-
-
 
 
 class DummyCV(object):
