@@ -3,46 +3,6 @@ import numpy as np
 import mixtape.tica
 import mixtape.subset_featurizer
 
-class SubsetFeatureUnion(mixtape.featurizer.TrajFeatureUnion):
-    """Mixtape version of sklearn.pipeline.FeatureUnion with feature subset selection.
-    
-    Notes
-    -----
-    Works on lists of trajectories.
-    Has a hacky convenience method to set all subsets at once.
-    """
-
-    @property
-    def subsets(self):
-        return [featurizer.subset for (_, featurizer) in self.transformer_list]
-
-    @subsets.setter
-    def subsets(self, value):
-        assert len(value) == len(self.transformer_list), "wrong len"
-        for k, (_, featurizer) in enumerate(self.transformer_list):
-            featurizer.subset = value[k]
-
-
-    @property
-    def n_max_i(self):
-        return np.array([featurizer.n_max for (_, featurizer) in self.transformer_list])
-
-    @property
-    def n_features_i(self):
-        return np.array([featurizer.n_features for (_, featurizer) in self.transformer_list])
-
-    @property
-    def n_featurizers(self):
-        return len(self.transformer_list)
-
-    @property
-    def n_max(self):
-        return np.sum([featurizer.n_max for (_, featurizer) in self.transformer_list])
-
-    @property
-    def n_features(self):
-        return sum([featurizer.n_features for (_, featurizer) in self.transformer_list])
-
 
 def clone_and_swap(featurizer):
     """Clone a featurizer and randomly swap one of its features.
@@ -111,8 +71,8 @@ class TICAOptimizer(TICAScoreMixin):
         self.lag_time = lag_time
 
 
-    def build(self, featurizer, trajectories):
-        """Featurize all active subset and build a tICA model."""
+    def _build(self, featurizer, trajectories):
+        """Featurize all active subsets and build a tICA model."""
         tica = mixtape.tica.tICA(lag_time=self.lag_time)
         features = featurizer.transform(trajectories)
         unused_output = tica.fit(features)
@@ -121,6 +81,15 @@ class TICAOptimizer(TICAScoreMixin):
 
     
     def optimize(self, n_iter, trajectories):
+        """Optimize TICA objective function by random swapping.
+        
+        Parameters
+        ----------
+        n_iter : int
+            Number of iterations to attempt
+        trajectories : list of md.Trajectory
+            Trajectories to use.
+        """
         
         self.model, self.obj = self.build(self.featurizer, trajectories)
         self.old_model = self.model
@@ -129,7 +98,7 @@ class TICAOptimizer(TICAScoreMixin):
         
         for i in range(n_iter):
             new_featurizer = clone_and_swap(self.featurizer)
-            self.model, self.obj = self.build(new_featurizer, trajectories)
+            self.model, self.obj = self._build(new_featurizer, trajectories)
             if not self.compare():
                 self.model = self.old_model
             else:
