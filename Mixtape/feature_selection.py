@@ -91,7 +91,7 @@ class TICAOptimizer(TICAScoreMixin):
             Trajectories to use.
         """
         
-        self.model, self.obj = self.build(self.featurizer, trajectories)
+        self.model, self.obj = self._build(self.featurizer, trajectories)
         self.old_model = self.model
         self.old_obj = self.obj
 
