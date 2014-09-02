@@ -45,6 +45,18 @@ class SubsetFeatureUnion(mixtape.featurizer.TrajFeatureUnion):
 
 
 def clone_and_swap(featurizer):
+    """Clone a featurizer and randomly swap one of its features.
+    
+    Parameters
+    ----------
+    featurizer : SubsetUnionFeaturizer
+        The featurizer to clone and swap.
+    
+    Returns
+    -------
+    featurizer : SubsetUnionFeaturizer
+        A new featurizer with one of its features swapped with a randomly selected feature.
+    """
     featurizer = sklearn.clone(featurizer)
     new_feature = np.random.choice(featurizer.n_featurizers)
     new_value = np.random.choice(featurizer.n_max_i[new_feature])
@@ -77,7 +89,7 @@ def clone_and_swap(featurizer):
     return featurizer
 
 
-class OldTICAScoreMixin(object):
+class TICAScoreMixin(object):
     """Provides compare() and summarize() functionality for TICAOptimizer.
     Uses variational eigenvalue comparison to rank models.
     """
@@ -90,33 +102,14 @@ class OldTICAScoreMixin(object):
         print("%d %.5f %.4f %.4f **** %.5f %.4f %.4f" % (
         self.accept, self.old_model.eigenvalues_[0], self.old_model.eigenvalues_[1], self.old_model.eigenvalues_[2], self.model.eigenvalues_[0], self.model.eigenvalues_[1], self.model.eigenvalues_[2]))
 
-class TICAScoreMixin(object):
-    """Provides compare() and summarize() functionality for TICAOptimizer.
-    Uses variational eigenvalue comparison to rank models.
-    """
-    def compare(self):
-        self.accept = (self.obj >= self.old_obj)
-        self.summarize()
-        return self.accept
 
-    def summarize(self):
-        print("%d %.3f %.3f **** %.5f %.4f %.4f **** %.5f %.4f %.4f" % (
-        self.accept, self.old_obj, self.obj, 
-        self.old_model.eigenvalues_[0], self.old_model.eigenvalues_[1], self.old_model.eigenvalues_[2], 
-        self.model.eigenvalues_[0], self.model.eigenvalues_[1], self.model.eigenvalues_[2])
-        )
-
-
-
-
-class TICAOptimizer(OldTICAScoreMixin):
+class TICAOptimizer(TICAScoreMixin):
     """Optimize TICA objective function by swapping active features one-by-one."""
-    def __init__(self, featurizer, trajectories, lag_time=1):
+    def __init__(self, featurizer, lag_time=1):
         
-        self.trj0 = trajectories[0][0]
         self.featurizer = featurizer
         self.lag_time = lag_time
-            
+
 
     def build(self, featurizer, trajectories):
         """Featurize all active subset and build a tICA model."""
