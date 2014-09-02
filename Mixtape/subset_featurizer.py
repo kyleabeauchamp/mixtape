@@ -93,12 +93,13 @@ def _lookup_pairs_subset(all_pair_indices, subset_pair_indices, n_choose=None):
     all_keys = all_pair_indices[:, 0] + n * all_pair_indices[:, 1]
     optimal_keys = subset_pair_indices[:, 0] + n * subset_pair_indices[:, 1]
     subset = np.where(np.in1d(all_keys, optimal_keys))[0]
+
     if n_choose is not None:
         subset[0:min(len(subset), n_choose)] = subset[0:min(len(subset), n_choose)]
 
     return subset
 
-def guess_useful_featurizers(trj0, n_choose, rmsd_trajectory=None):
+def guess_featurizers(trj0, n_choose, rmsd_trajectory=None):
     """Get a SubsetUnionFeaturizer that includes "best-practices" features.
     
     Parameters
