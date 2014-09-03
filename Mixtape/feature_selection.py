@@ -49,36 +49,12 @@ def clone_and_swap(featurizer):
     return featurizer
 
 
-class TICAScoreMixin(object):
-    """Provides compare() and summarize() functionality for TICAOptimizer.
-    Uses variational eigenvalue comparison to rank models.
-    """
-    def compare(self):
-        self.accept = is_better(self.model.eigenvalues_, self.old_model.eigenvalues_)
-        self.summarize()
-        return self.accept
-
-    def summarize(self):
-        print("%d %.5f %.4f %.4f **** %.5f %.4f %.4f" % (
-        self.accept, self.old_model.eigenvalues_[0], self.old_model.eigenvalues_[1], self.old_model.eigenvalues_[2], self.model.eigenvalues_[0], self.model.eigenvalues_[1], self.model.eigenvalues_[2]))
-
-
-class TICAOptimizer(TICAScoreMixin):
+class Optimizer(object):
     """Optimize TICA objective function by swapping active features one-by-one."""
-    def __init__(self, featurizer, lag_time=1):
+    def __init__(self, featurizer, model):
         
         self.featurizer = featurizer
-        self.lag_time = lag_time
-
-
-    def _build(self, featurizer, trajectories):
-        """Featurize all active subsets and build a tICA model."""
-        tica = mixtape.tica.tICA(lag_time=self.lag_time)
-        features = featurizer.transform(trajectories)
-        unused_output = tica.fit(features)
-        
-        return tica, 1.0 # tica.score(features)
-
+        self.model = model
     
     def optimize(self, n_iter, trajectories):
         """Optimize TICA objective function by random swapping.
@@ -91,27 +67,29 @@ class TICAOptimizer(TICAScoreMixin):
             Trajectories to use.
         """
         
-        self.model, self.obj = self._build(self.featurizer, trajectories)
-        self.old_model = self.model
-        self.old_obj = self.obj
-
+        features = self.featurizer.transform(trajectories)
+        self.model = sklearn.clone(self.model)
+        self.model.fit(features)
+        self.current_score = self.model.score(features)
         
         for i in range(n_iter):
             new_featurizer = clone_and_swap(self.featurizer)
-            self.model, self.obj = self._build(new_featurizer, trajectories)
-            if not self.compare():
-                self.model = self.old_model
+            
+            features = new_featurizer.transform(trajectories)
+            new_model = sklearn.clone(self.model)
+            new_model.fit(features)
+            new_score = new_model.score(features)
+
+            if new_score > self.current_score:
+                accept = True
             else:
+                accept = False
+
+            print("%d * %.4f %.4f ** %.4f %.4f %.4f **** %.4f %.4f %.4f" % (
+            accept, self.current_score, new_score, self.model.eigenvalues_[0], self.model.eigenvalues_[1], self.model.eigenvalues_[2], new_model.eigenvalues_[0], new_model.eigenvalues_[1], new_model.eigenvalues_[2]))
+            
+            if accept:
+                self.model = new_model
                 self.featurizer = new_featurizer
-            self.old_model = self.model
-            self.old_obj = self.obj
+                self.current_score = new_score                
 
-
-def is_better(lam, lam0):
-    """Compares lists of ordered eigenvalues for slowness."""
-    try:
-        first_gain = np.where(lam > lam0)[0][0]
-        first_loss = np.where(lam < lam0)[0][0]
-        return first_gain < first_loss
-    except:
-        return False
