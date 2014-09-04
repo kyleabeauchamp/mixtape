@@ -105,12 +105,13 @@ def guess_featurizers(trj0, n_choose, rmsd_trajectory=None):
     Parameters
     ----------
     trj0 : md.Trajectory
-        MDTraj trajectory object
+        Reference Trajectory, used for looking up dihedrals.
     n_choose : int
         Number of features to activate.  
     rmsd_trajectory : MD.Trajectory, optional, default=None
         If given, also use the RMSD to the frames in this trajectory as
-        features.  
+        features.  For example, this trajectory could be a single crystal
+        structure or a trajectory of cluster centers.
     
     Returns
     -------

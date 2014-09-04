@@ -16,6 +16,11 @@ def clone_and_swap(featurizer):
     -------
     featurizer : SubsetUnionFeaturizer
         A new featurizer with one of its features swapped with a randomly selected feature.
+        
+    ToDo
+    ----
+    Make a separate MCMC mover class, or make this function a class method
+    on SubsetUnionFeaturizer?
     """
     featurizer = sklearn.clone(featurizer)
     new_feature = np.random.choice(featurizer.n_featurizers)
@@ -50,9 +55,17 @@ def clone_and_swap(featurizer):
 
 
 class Optimizer(object):
-    """Optimize TICA objective function by swapping active features one-by-one."""
+    """Optimize TICA objective function by swapping active features one-by-one.
+    
+    Parameters
+    ----------
+    featurizer : SubsetUnionFeaturizer
+        The featurizer to clone and swap during optimization.
+    model : BaseEstimator
+        Some model object that implements score() that can be used to
+        build and evaluate models.
+    """
     def __init__(self, featurizer, model):
-        
         self.featurizer = featurizer
         self.model = model
     
