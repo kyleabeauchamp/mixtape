@@ -117,7 +117,10 @@ def guess_featurizers(trj0, n_choose, rmsd_trajectory=None):
     featurizer : SubsetUnionFeaturizer
         Returns a featurizer that includes best-practices features that
         can be enabled or disabled via subsets.
+    
     """
+    trj0 = trj0[0]  # Slice the first frame of the reference trajectory to avoid huge memory consumption.
+    
     atom_indices, pair_indices = get_atompair_indices(trj0, keep_atoms=None, exclude_atoms=np.array([]))
     
     atom_featurizer1m = SubsetAtomPairs(pair_indices, trj0, exponent=-1.0)

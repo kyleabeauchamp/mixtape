@@ -86,8 +86,6 @@ class Optimizer(object):
                 accept = False
 
             print("%d * %.4f %.4f" % (accept, self.current_score, new_score))
-            #print("%d * %.4f %.4f ** %.4f %.4f %.4f **** %.4f %.4f %.4f" % (
-            #accept, self.current_score, new_score, self.model.eigenvalues_[0], self.model.eigenvalues_[1], self.model.eigenvalues_[2], new_model.eigenvalues_[0], new_model.eigenvalues_[1], new_model.eigenvalues_[2]))
             
             if accept:
                 self.model = new_model
