@@ -297,6 +297,15 @@ class SubsetSinPsiFeaturizer(SubsetTrigFeaturizer, SinMixin, PsiMixin):
 
 
 class SubsetProductFeaturizer(BaseSubsetFeaturizer):
+    """Subset Featurizer that gives elementwise proudcts of two featurizers.
+    
+    Parameters
+    ----------
+    featurizer0 : SubsetFeaturizer
+        First featurizer
+    featurizer1 : SubsetFeaturizer
+        Second featurizer
+    """
     def __init__(self, featurizer0, featurizer1):
         self.featurizer0 = featurizer0
         self.featurizer1 = featurizer1
