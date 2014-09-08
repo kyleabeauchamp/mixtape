@@ -73,7 +73,7 @@ class Optimizer(sklearn.base.BaseEstimator):
         self.n_iter = n_iter
     
     def optimize(self, trajectories):
-        """Optimize TICA objective function by random swapping.
+        """Optimize objective function by random swapping.
         
         Parameters
         ----------
