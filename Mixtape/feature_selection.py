@@ -64,6 +64,8 @@ class Optimizer(sklearn.base.BaseEstimator):
     model : BaseEstimator
         Some model object that implements score() that can be used to
         build and evaluate models.
+    n_iter : int
+        Number of iterations to attempt when optimize() is called.
     """
     def __init__(self, featurizer, model, n_iter):
         self.featurizer = featurizer
