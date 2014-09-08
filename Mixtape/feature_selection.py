@@ -55,7 +55,7 @@ def clone_and_swap(featurizer):
 
 
 class Optimizer(sklearn.base.BaseEstimator):
-    """Optimize TICA objective function by swapping active features one-by-one.
+    """Optimize objective function by swapping active features one-by-one.
     
     Parameters
     ----------
