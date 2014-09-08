@@ -1,4 +1,4 @@
-import sklearn
+import sklearn, sklearn.base
 import numpy as np
 import mixtape.tica
 import mixtape.subset_featurizer
@@ -54,7 +54,7 @@ def clone_and_swap(featurizer):
     return featurizer
 
 
-class Optimizer(object):
+class Optimizer(sklearn.base.BaseEstimator):
     """Optimize TICA objective function by swapping active features one-by-one.
     
     Parameters
@@ -65,11 +65,12 @@ class Optimizer(object):
         Some model object that implements score() that can be used to
         build and evaluate models.
     """
-    def __init__(self, featurizer, model):
+    def __init__(self, featurizer, model, n_iter):
         self.featurizer = featurizer
         self.model = model
+        self.n_iter = n_iter
     
-    def optimize(self, n_iter, trajectories):
+    def optimize(self, trajectories):
         """Optimize TICA objective function by random swapping.
         
         Parameters
@@ -85,7 +86,7 @@ class Optimizer(object):
         self.model.fit(features)
         self.current_score = self.model.score(features)
         
-        for i in range(n_iter):
+        for i in range(self.n_iter):
             new_featurizer = clone_and_swap(self.featurizer)
             
             features = new_featurizer.transform(trajectories)
