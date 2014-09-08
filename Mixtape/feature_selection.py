@@ -77,8 +77,6 @@ class Optimizer(sklearn.base.BaseEstimator):
         
         Parameters
         ----------
-        n_iter : int
-            Number of iterations to attempt
         trajectories : list of md.Trajectory
             Trajectories to use.
         """
