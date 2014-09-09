@@ -353,6 +353,11 @@ class SubsetRMSDFeaturizer(BaseSubsetFeaturizer):
     def __init__(self, trj0, atom_indices=None, subset=None):
         self.trj0 = trj0
         self.atom_indices = atom_indices
+        if subset is not None:
+            self.subset = subset
+        else:
+            self.subset = np.zeros(0, 'int')
+
 
     @property
     def n_max(self):
