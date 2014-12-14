@@ -21,7 +21,7 @@ import mdtraj as md
 from .base import Bunch, Dataset
 from .base import get_data_home
 
-TARBALL_PATH =  join(expanduser("~"), "dat/ShawScience/TarBalls/")
+DESRES_TARBALL_PATH =  os.environ["DESRES_TARBALL_PATH"]
 
 def mae_to_pdb(in_filename, out_filename):
     """Use VMD to convert a meastro file into a PDB file."""
@@ -49,8 +49,6 @@ class _DESRESDataset(Dataset):
         Specify another download and cache folder for the datasets. By default
         all MSMBuilder data is stored in '~/msmbuilder_data' subfolders.
 
-    Notes
-    -----
     """
 
     def __init__(self, data_home=None, stride=1):
@@ -87,7 +85,7 @@ class _DESRESDataset(Dataset):
         print("Extracting %s trajectory." % self.name)
         with md.utils.enter_temp_directory():
             print(os.getcwd())
-            archive = tarfile.open(self._tarball_filename, mode='r:gz')
+            archive = tarfile.open(self._tarball_filename)  # , mode='r:gz')
             print("Extracting %s" % self._mae_filename)
             archive.extract(self._mae_filename)
             print("mae to pdb")
@@ -125,6 +123,7 @@ class DESRES2F4K(_DESRESDataset):
 
     Notes
     -----
+    You may be able to obtain this dataset by contacting DE Shaw research.
     """
 
     def __init__(self, data_home=None, stride=5, **kwargs):
@@ -132,7 +131,7 @@ class DESRES2F4K(_DESRESDataset):
         super(DESRES2F4K, self).__init__(**kwargs)
         self._stride = stride  # default of 1 ns per frame, as raw data is 200 ps per frame
         self._num_dcd_files = 63
-        self._tarball_filename = join(TARBALL_PATH, "DESRES-Trajectory_2F4K-0-protein.tar.gz")
+        self._tarball_filename = join(DESRES_TARBALL_PATH, "DESRES-Trajectory_2F4K-0-protein.tar.gz")
         self._mae_filename = "DESRES-Trajectory_2F4K-0-protein/system.mae"
         self.name = "DESRES 2F4K"
         self._protein_indices = np.arange(577)  # Have to manually enter because of some wacky atom names in MAE file
@@ -156,6 +155,7 @@ class DESRESBPTI(_DESRESDataset):
 
     Notes
     -----
+    You may be able to obtain this dataset by contacting DE Shaw research.
     """
 
     def __init__(self, data_home=None, stride=5, **kwargs):
@@ -163,12 +163,66 @@ class DESRESBPTI(_DESRESDataset):
         super(DESRESBPTI, self).__init__(**kwargs)
         self._stride = stride  # default of 1 ns per frame, as raw data is 200 ps per frame
         self._num_dcd_files = 42
-        self._tarball_filename = join(TARBALL_PATH, "DESRES-Trajectory-bpti-100.tar.gz")
+        self._tarball_filename = join(DESRES_TARBALL_PATH, "DESRES-Trajectory-bpti-100.tar.gz")
         self._mae_filename = "DESRES-Trajectory-bpti-100/bpti.mae"
         self.name = "DESRES BPTI"
         self.top_dir = "DESRES-Trajectory-bpti-100"
         self.dcd_prefix = "bpti-100" 
         self._dcd_is_only_protein = False
+
+
+class DESRESFIP35_1(_DESRESDataset):
+    """Trajectory 1 of DESRES FIP35 (Science 2010) dataset
+
+    Parameters
+    ----------
+    data_home : optional, default: None
+        Specify another download and cache folder for the datasets. By default
+        all MSMBuilder data is stored in '~/msmbuilder_data' subfolders.
+
+    Notes
+    -----
+    """
+
+    def __init__(self, data_home=None, stride=5, **kwargs):
+        self.name = "DESRES_FIP35_1"
+        self._target_directory = "%s_stride%d" % (self.name, stride)
+        super(DESRESFIP35_1, self).__init__(**kwargs)
+        self._stride = stride
+        self._num_dcd_files = 50
+        self._tarball_filename = join(DESRES_TARBALL_PATH, "DESRES-Trajectory-ww_1-protein.tar")
+        self._mae_filename = "DESRES-Trajectory-ww_1-protein/ww.mae"
+        self._protein_indices = np.arange(528)  # Have to manually enter because of some wacky atom names in MAE file
+        self.top_dir = "DESRES-Trajectory-ww_1-protein"
+        self.dcd_prefix = "ww_1-protein" 
+        self._dcd_is_only_protein = True
+
+class DESRESFIP35_2(_DESRESDataset):
+    """Trajectory 1 of DESRES FIP35 (Science 2010) dataset
+
+    Parameters
+    ----------
+    data_home : optional, default: None
+        Specify another download and cache folder for the datasets. By default
+        all MSMBuilder data is stored in '~/msmbuilder_data' subfolders.
+
+    Notes
+    -----
+    You may be able to obtain this dataset by contacting DE Shaw research.
+    """
+
+    def __init__(self, data_home=None, stride=5, **kwargs):
+        self.name = "DESRES_FIP35_2"
+        self._target_directory = "%s_stride%d" % (self.name, stride)
+        super(DESRESFIP35_1, self).__init__(**kwargs)
+        self._stride = stride
+        self._num_dcd_files = 50
+        self._tarball_filename = join(DESRES_TARBALL_PATH, "DESRES-Trajectory-ww_2-protein.tar")
+        self._mae_filename = "DESRES-Trajectory-ww_2-protein/ww.mae"
+        self._protein_indices = np.arange(528)  # Have to manually enter because of some wacky atom names in MAE file
+        self.top_dir = "DESRES-Trajectory-ww_2-protein"
+        self.dcd_prefix = "ww_2-protein" 
+        self._dcd_is_only_protein = True
 
 
 def fetch_2f4k(data_home=None):
@@ -180,3 +234,13 @@ def fetch_bpti(data_home=None):
     return DESRESBPTI(data_home).get()
 
 fetch_bpti.__doc__ = DESRESBPTI.__doc__
+
+def fetch_fip35_1(data_home=None):
+    return DESRESFIP35_1(data_home).get()
+
+fetch_fip35_1.__doc__ = DESRESFIP35_1.__doc__
+
+def fetch_fip35_2(data_home=None):
+    return DESRESFIP35_2(data_home).get()
+
+fetch_fip35_2.__doc__ = DESRESFIP35_2.__doc__
