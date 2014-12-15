@@ -120,10 +120,14 @@ class DESRES2F4K(_DESRESDataset):
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
         all MSMBuilder data is stored in '~/msmbuilder_data' subfolders.
+    stride : int, optional, default=5
+        How much to subsample the dataset.  
 
     Notes
     -----
     You may be able to obtain this dataset by contacting DE Shaw research.
+    Processing this dataset requires a working VMD installation, for
+    converting the maestro file to PDB.
     """
 
     def __init__(self, data_home=None, stride=5, **kwargs):
@@ -152,13 +156,17 @@ class DESRESBPTI(_DESRESDataset):
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
         all MSMBuilder data is stored in '~/msmbuilder_data' subfolders.
+    stride : int, optional, default=1
+        How much to subsample the dataset.  
 
     Notes
     -----
     You may be able to obtain this dataset by contacting DE Shaw research.
+    Processing this dataset requires a working VMD installation, for
+    converting the maestro file to PDB.
     """
 
-    def __init__(self, data_home=None, stride=5, **kwargs):
+    def __init__(self, data_home=None, stride=1, **kwargs):
         self._target_directory = "DESRES_BPTI_stride%d" % stride
         super(DESRESBPTI, self).__init__(**kwargs)
         self._stride = stride  # default of 1 ns per frame, as raw data is 200 ps per frame
@@ -174,14 +182,20 @@ class DESRESBPTI(_DESRESDataset):
 class DESRESFIP35_1(_DESRESDataset):
     """Trajectory 1 of DESRES FIP35 (Science 2010) dataset
 
+
     Parameters
     ----------
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
         all MSMBuilder data is stored in '~/msmbuilder_data' subfolders.
+    stride : int, optional, default=5
+        How much to subsample the dataset.  
 
     Notes
     -----
+    You may be able to obtain this dataset by contacting DE Shaw research.
+    Processing this dataset requires a working VMD installation, for
+    converting the maestro file to PDB.
     """
 
     def __init__(self, data_home=None, stride=5, **kwargs):
@@ -205,16 +219,20 @@ class DESRESFIP35_2(_DESRESDataset):
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
         all MSMBuilder data is stored in '~/msmbuilder_data' subfolders.
+    stride : int, optional, default=5
+        How much to subsample the dataset.  
 
     Notes
     -----
     You may be able to obtain this dataset by contacting DE Shaw research.
+    Processing this dataset requires a working VMD installation, for
+    converting the maestro file to PDB.
     """
 
     def __init__(self, data_home=None, stride=5, **kwargs):
         self.name = "DESRES_FIP35_2"
         self._target_directory = "%s_stride%d" % (self.name, stride)
-        super(DESRESFIP35_1, self).__init__(**kwargs)
+        super(DESRESFIP35_2, self).__init__(**kwargs)
         self._stride = stride
         self._num_dcd_files = 50
         self._tarball_filename = join(DESRES_TARBALL_PATH, "DESRES-Trajectory-ww_2-protein.tar")
