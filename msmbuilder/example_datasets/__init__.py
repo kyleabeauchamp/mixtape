@@ -25,6 +25,7 @@ __all__ = [
     'DoubleWell',
     'QuadWell',
     "DESRES2F4K",
-    "DESRESBPTI",    
-    "DESRESBPTI",        
+    "DESRESBPTI",
+    "DESRESFIP35_1",
+    "DESRESFIP35_2",    
 ]
