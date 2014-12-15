@@ -307,8 +307,9 @@ class ContinuousTimeMSM(BaseEstimator, _MappingTransformMixin):
     def score_(self):
         """Training score of the model, computed as the generalized matrix,
         Rayleigh quotient, the sum of the first `n_components` eigenvalues
+        of the corresponding transition matrix.
         """
-        return self.eigenvalues_.sum()
+        return np.exp(self.eigenvalues_).sum()
 
     def score(self, sequences, y=None):
         """Score the model on new data using the generalized matrix Rayleigh
@@ -350,7 +351,7 @@ class ContinuousTimeMSM(BaseEstimator, _MappingTransformMixin):
         # How well do they diagonalize S and C, which are
         # computed from the new test data?
         S = np.diag(m2.populations_)
-        C = S.dot(m2.ratemat_)
+        C = S.dot(m2.transmat_)
 
         try:
             trace = np.trace(V.T.dot(C.dot(V)).dot(np.linalg.inv(V.T.dot(S.dot(V)))))
