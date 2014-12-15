@@ -9,7 +9,7 @@
 from __future__ import print_function, absolute_import, division
 
 from glob import glob
-from io import BytesIO
+from distutils.spawn import find_executable
 import os
 from os import makedirs, system
 from os.path import exists, join, basename, expanduser
@@ -21,8 +21,6 @@ import mdtraj as md
 from .base import Bunch, Dataset
 from .base import get_data_home
 
-DESRES_TARBALL_PATH =  os.environ["DESRES_TARBALL_PATH"]
-
 def mae_to_pdb(in_filename, out_filename):
     """Use VMD to convert a meastro file into a PDB file."""
     
@@ -31,6 +29,11 @@ set sel [atomselect top all]
 $sel writepdb %s
 exit 0 
 """ % (in_filename, out_filename)
+
+    vmd_path = find_executable("vmd")
+
+    if vmd_path is None:
+        raise(RuntimeError("Cannot find vmd executable, which is required to parse DESRES datasets."))
 
     handle = tempfile.NamedTemporaryFile(suffix=".tcl")
     handle.write(tcl_text)
@@ -52,6 +55,11 @@ class _DESRESDataset(Dataset):
     """
 
     def __init__(self, data_home=None, stride=1):
+        try:
+            self._desres_tarball_path =  os.environ["DESRES_TARBALL_PATH"]
+        except KeyError as e:
+            raise(KeyError("Please set environment variable DESRES_TARBALL_PATH to point to path containing DESRES tarballs."))
+
         self.data_home = get_data_home(data_home)
         self.data_dir = join(self.data_home, self._target_directory)
         self.cached = False
@@ -135,7 +143,7 @@ class DESRES2F4K(_DESRESDataset):
         super(DESRES2F4K, self).__init__(**kwargs)
         self._stride = stride  # default of 1 ns per frame, as raw data is 200 ps per frame
         self._num_dcd_files = 63
-        self._tarball_filename = join(DESRES_TARBALL_PATH, "DESRES-Trajectory_2F4K-0-protein.tar.gz")
+        self._tarball_filename = join(self._desres_tarball_path, "DESRES-Trajectory_2F4K-0-protein.tar.gz")
         self._mae_filename = "DESRES-Trajectory_2F4K-0-protein/system.mae"
         self.name = "DESRES 2F4K"
         self._protein_indices = np.arange(577)  # Have to manually enter because of some wacky atom names in MAE file
@@ -171,7 +179,7 @@ class DESRESBPTI(_DESRESDataset):
         super(DESRESBPTI, self).__init__(**kwargs)
         self._stride = stride  # default of 1 ns per frame, as raw data is 200 ps per frame
         self._num_dcd_files = 42
-        self._tarball_filename = join(DESRES_TARBALL_PATH, "DESRES-Trajectory-bpti-100.tar.gz")
+        self._tarball_filename = join(self._desres_tarball_path, "DESRES-Trajectory-bpti-100.tar.gz")
         self._mae_filename = "DESRES-Trajectory-bpti-100/bpti.mae"
         self.name = "DESRES BPTI"
         self.top_dir = "DESRES-Trajectory-bpti-100"
@@ -204,7 +212,7 @@ class DESRESFIP35_1(_DESRESDataset):
         super(DESRESFIP35_1, self).__init__(**kwargs)
         self._stride = stride
         self._num_dcd_files = 50
-        self._tarball_filename = join(DESRES_TARBALL_PATH, "DESRES-Trajectory-ww_1-protein.tar")
+        self._tarball_filename = join(self._desres_tarball_path, "DESRES-Trajectory-ww_1-protein.tar")
         self._mae_filename = "DESRES-Trajectory-ww_1-protein/ww.mae"
         self._protein_indices = np.arange(528)  # Have to manually enter because of some wacky atom names in MAE file
         self.top_dir = "DESRES-Trajectory-ww_1-protein"
@@ -235,7 +243,7 @@ class DESRESFIP35_2(_DESRESDataset):
         super(DESRESFIP35_2, self).__init__(**kwargs)
         self._stride = stride
         self._num_dcd_files = 50
-        self._tarball_filename = join(DESRES_TARBALL_PATH, "DESRES-Trajectory-ww_2-protein.tar")
+        self._tarball_filename = join(self._desres_tarball_path, "DESRES-Trajectory-ww_2-protein.tar")
         self._mae_filename = "DESRES-Trajectory-ww_2-protein/ww.mae"
         self._protein_indices = np.arange(528)  # Have to manually enter because of some wacky atom names in MAE file
         self.top_dir = "DESRES-Trajectory-ww_2-protein"
