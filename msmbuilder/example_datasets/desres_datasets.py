@@ -15,6 +15,7 @@ from os import makedirs, system
 from os.path import exists, join, basename, expanduser
 import tarfile
 import tempfile
+import itertools
 
 import numpy as np
 import mdtraj as md
@@ -54,10 +55,12 @@ class _DESRESDataset(Dataset):
     data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
         all MSMBuilder data is stored in '~/msmbuilder_data' subfolders.
+    stride : int, optional, default=1
+        How much to subsample the dataset.  
 
     """
 
-    def __init__(self, data_home=None, stride=1):
+    def __init__(self, data_home=None, stride=None):
         try:
             self._desres_tarball_path =  os.environ["DESRES_TARBALL_PATH"]
         except KeyError as e:
@@ -66,12 +69,22 @@ class _DESRESDataset(Dataset):
         self.data_home = get_data_home(data_home)
         self.data_dir = join(self.data_home, self._target_directory)
         self.cached = False
-        self._stride = stride  # default of 1 ns per frame, as raw data is 200 ps per frame
+        self._stride = stride  # How much to subsample trajectories, e.g. out_traj = traj[::stride]
         self.system_filename = join(self.data_dir, "system.pdb")
         self.protein_filename = join(self.data_dir, "protein.pdb")
         self._protein_indices = None  # Override this to manually specify which atoms to save.  If None, use mdtraj to select "protein"
         self._dcd_is_only_protein = True  # If False, dcds have protein + solvent
-
+    
+    def _get_dcd_filenames(self, archive):
+        """Count the number of DCD files and return a list of their filenames."""
+        filenames = []
+        for i in itertools.count():
+            filename = "%s/%s/%s-%.3d.dcd" % (self.top_dir, self.dcd_prefix, self.dcd_prefix, i)
+            if filename in archive.getnames():
+                filenames.append(filename)
+            else:
+                return filenames
+    
     def cache(self):
         if not exists(self.data_home):
             makedirs(self.data_home)
@@ -112,8 +125,9 @@ class _DESRESDataset(Dataset):
             
             if not self._dcd_is_only_protein:
                 traj0 = md.load(self.system_filename)
-
-            filenames = ["%s/%s/%s-%.3d.dcd" % (self.top_dir, self.dcd_prefix, self.dcd_prefix, i)  for i in range(self._num_dcd_files)]
+            
+            filenames = self._get_dcd_filenames(archive)
+            
             for filename in filenames:
                 print(filename)
                 archive.extract(filename)
@@ -143,9 +157,7 @@ class DESRES2F4K(_DESRESDataset):
 
     def __init__(self, data_home=None, stride=5, **kwargs):
         self._target_directory = "DESRES_2F4K_stride%d" % stride
-        super(DESRES2F4K, self).__init__(**kwargs)
-        self._stride = stride  # default of 1 ns per frame, as raw data is 200 ps per frame
-        self._num_dcd_files = 63
+        super(DESRES2F4K, self).__init__(data_home=data_home, stride=stride, **kwargs)
         self._tarball_filename = join(self._desres_tarball_path, "DESRES-Trajectory_2F4K-0-protein.tar.gz")
         self._mae_filename = "DESRES-Trajectory_2F4K-0-protein/system.mae"
         self.name = "DESRES 2F4K"
@@ -179,9 +191,7 @@ class DESRESBPTI(_DESRESDataset):
 
     def __init__(self, data_home=None, stride=1, **kwargs):
         self._target_directory = "DESRES_BPTI_stride%d" % stride
-        super(DESRESBPTI, self).__init__(**kwargs)
-        self._stride = stride  # default of 1 ns per frame, as raw data is 200 ps per frame
-        self._num_dcd_files = 42
+        super(DESRESBPTI, self).__init__(data_home=data_home, stride=stride, **kwargs)
         self._tarball_filename = join(self._desres_tarball_path, "DESRES-Trajectory-bpti-100.tar.gz")
         self._mae_filename = "DESRES-Trajectory-bpti-100/bpti.mae"
         self.name = "DESRES BPTI"
@@ -212,9 +222,7 @@ class DESRESFIP35_1(_DESRESDataset):
     def __init__(self, data_home=None, stride=5, **kwargs):
         self.name = "DESRES_FIP35_1"
         self._target_directory = "%s_stride%d" % (self.name, stride)
-        super(DESRESFIP35_1, self).__init__(**kwargs)
-        self._stride = stride
-        self._num_dcd_files = 50
+        super(DESRESFIP35_1, self).__init__(data_home=data_home, stride=stride, **kwargs)
         self._tarball_filename = join(self._desres_tarball_path, "DESRES-Trajectory-ww_1-protein.tar")
         self._mae_filename = "DESRES-Trajectory-ww_1-protein/ww.mae"
         self._protein_indices = np.arange(528)  # Have to manually enter because of some wacky atom names / numbering in MAE file
@@ -243,9 +251,7 @@ class DESRESFIP35_2(_DESRESDataset):
     def __init__(self, data_home=None, stride=5, **kwargs):
         self.name = "DESRES_FIP35_2"
         self._target_directory = "%s_stride%d" % (self.name, stride)
-        super(DESRESFIP35_2, self).__init__(**kwargs)
-        self._stride = stride
-        self._num_dcd_files = 50
+        super(DESRESFIP35_2, self).__init__(data_home=data_home, stride=stride, **kwargs)
         self._tarball_filename = join(self._desres_tarball_path, "DESRES-Trajectory-ww_2-protein.tar")
         self._mae_filename = "DESRES-Trajectory-ww_2-protein/ww.mae"
         self._protein_indices = np.arange(528)  # Have to manually enter because of some wacky atom names / numbering in MAE file
