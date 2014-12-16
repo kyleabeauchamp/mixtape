@@ -40,7 +40,10 @@ exit 0
     handle.flush()
 
     script_name = handle.name
-    system("vmd -e %s" % script_name)
+    cmd = "vmd -dispdev text -e %s" % script_name
+    print(cmd)
+    system(cmd)
+    print("Done running vmd")
     handle.close()
 
 class _DESRESDataset(Dataset):
@@ -214,7 +217,7 @@ class DESRESFIP35_1(_DESRESDataset):
         self._num_dcd_files = 50
         self._tarball_filename = join(self._desres_tarball_path, "DESRES-Trajectory-ww_1-protein.tar")
         self._mae_filename = "DESRES-Trajectory-ww_1-protein/ww.mae"
-        self._protein_indices = np.arange(528)  # Have to manually enter because of some wacky atom names in MAE file
+        self._protein_indices = np.arange(528)  # Have to manually enter because of some wacky atom names / numbering in MAE file
         self.top_dir = "DESRES-Trajectory-ww_1-protein"
         self.dcd_prefix = "ww_1-protein" 
         self._dcd_is_only_protein = True
@@ -245,7 +248,7 @@ class DESRESFIP35_2(_DESRESDataset):
         self._num_dcd_files = 50
         self._tarball_filename = join(self._desres_tarball_path, "DESRES-Trajectory-ww_2-protein.tar")
         self._mae_filename = "DESRES-Trajectory-ww_2-protein/ww.mae"
-        self._protein_indices = np.arange(528)  # Have to manually enter because of some wacky atom names in MAE file
+        self._protein_indices = np.arange(528)  # Have to manually enter because of some wacky atom names / numbering in MAE file
         self.top_dir = "DESRES-Trajectory-ww_2-protein"
         self.dcd_prefix = "ww_2-protein" 
         self._dcd_is_only_protein = True
