@@ -166,11 +166,6 @@ class DESRES2F4K(_DESRESDataset):
         self.dcd_prefix = "2F4K-0-protein"
 
 
-def fetch_2f4k(data_home=None):
-    return DESRES2F4K(data_home).get()
-
-fetch_2f4k.__doc__ = DESRES2F4K.__doc__
-
 class DESRESBPTI(_DESRESDataset):
     """Millisecond BPTI trajectory from DESRES
 
