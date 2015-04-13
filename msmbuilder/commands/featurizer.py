@@ -27,7 +27,7 @@ class FeaturizerCommand(NumpydocClassCommand):
     out = argument(
         '--out', required=True, help="""Output path for featurized data.
         NOTE: THIS ARGUMENT WILL BE SWAPPED WITH --transformed IN MSMB 
-        3.4!!!
+        3.3!!!
         """, type=exttype('/'))
     stride = argument(
         '--stride', default=1, type=int,
